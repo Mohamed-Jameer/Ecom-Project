@@ -23,7 +23,15 @@ public class ProductService {
         return repo.findById(id).orElse(null);
     }
 
-    public Product addProduct(Product product) {
+//    public Product addProduct(Product product, MultipartFile imageFile) {
+//        return repo.save(product);
+//    }
+
+    public Product addProduct(Product product, MultipartFile imageFile) throws IOException, IOException {
+        System.out.println("Product Service");
+        product.setImageName(imageFile.getOriginalFilename());
+        product.setImageType(imageFile.getContentType());
+        product.setImageDate(imageFile.getBytes());
         return repo.save(product);
     }
 

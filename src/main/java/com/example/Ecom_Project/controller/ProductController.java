@@ -2,6 +2,7 @@ package com.example.Ecom_Project.controller;
 
 import com.example.Ecom_Project.model.Product;
 import com.example.Ecom_Project.service.ProductService;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -56,10 +57,34 @@ public class ProductController {
 //    }
 
 
+//    @PostMapping("/addProduct")
+//    public Product addProduct(@RequestBody Product product) {
+//        return  service.addProduct(product);
+//    }
+
     @PostMapping("/addProduct")
-    public Product addProduct(@RequestBody Product product) {
-        return  service.addProduct(product);
+    public ResponseEntity<?> addProduct(
+            @RequestPart("product") String productJson,  // Receive the product as a JSON string
+            @RequestPart("imageFile") MultipartFile imageFile) {  // Receive the image file
+
+        System.out.println("Product Controller");
+        try {
+            // Convert productJson (String) to Product object using ObjectMapper
+            ObjectMapper mapper = new ObjectMapper();
+            Product product = mapper.readValue(productJson, Product.class);
+
+            System.out.println("Received product: " + product);
+            System.out.println("Received file: " + imageFile.getOriginalFilename());
+
+            // Save product and file
+            Product savedProduct = service.addProduct(product, imageFile);
+            return new ResponseEntity<>(savedProduct, HttpStatus.CREATED);
+        } catch (IOException e) {
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
+
+
 
     @PutMapping("/products/{id}")
     public ResponseEntity<String> UpdateProduct(@PathVariable int id, @RequestBody Product product) {
