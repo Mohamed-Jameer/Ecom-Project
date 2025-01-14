@@ -84,5 +84,15 @@ public class UserService {
         return  "Failed";
     }
 
+    public Users findByUserEmail(String userEmail){
+        Optional<Users> user = userRepo.findByUserEmail(userEmail);
+        Users correctUser = null;
+        if (user.isPresent()) {
+            correctUser = user.get();
+        }
+
+        return correctUser;
+    }
+
 
 }

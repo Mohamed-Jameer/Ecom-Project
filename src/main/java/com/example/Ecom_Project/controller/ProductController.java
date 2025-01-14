@@ -1,11 +1,18 @@
 package com.example.Ecom_Project.controller;
 
 import com.example.Ecom_Project.model.Product;
+import com.example.Ecom_Project.model.UserPrincipal;
+import com.example.Ecom_Project.model.Users;
 import com.example.Ecom_Project.service.ProductService;
+import com.example.Ecom_Project.service.UserService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -18,10 +25,18 @@ import java.util.List;
 public class ProductController {
 
     @Autowired
-    ProductService service;
+    private  ProductService service;
 
-    @RequestMapping("/")
-    public String home(){
+    @Autowired
+    private UserService userService;
+
+
+    @PostMapping("/")
+    public String home(@AuthenticationPrincipal UserDetails userDetails){
+//        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+//        String username = authentication.getName();
+        Users user =  userService.findByUserEmail(userDetails.getUsername());
+        System.out.println(user.getUserEmail()+"////");
         return "Welcome Our Page";
     }
 

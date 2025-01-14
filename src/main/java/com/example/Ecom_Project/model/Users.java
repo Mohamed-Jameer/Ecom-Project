@@ -1,11 +1,13 @@
 package com.example.Ecom_Project.model;
 
 import jakarta.persistence.*;
+import org.springframework.stereotype.Component;
 
 import java.util.HashSet;
 import java.util.Set;
 
 @Entity
+@Component
 public class Users {
 
     @Id

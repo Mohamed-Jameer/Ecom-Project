@@ -3,15 +3,19 @@ package com.example.Ecom_Project.model;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.stereotype.Component;
 
 import java.util.Collection;
 import java.util.Collections;
 
+@Component
 public class UserPrincipal implements UserDetails {
+
 
     private Users users;
 
     public UserPrincipal(Users users){
+        System.out.println("UserPrincipal "+ users.getUserEmail());
         this.users = users;
     }
 
@@ -27,7 +31,7 @@ public class UserPrincipal implements UserDetails {
 
     @Override
     public String getUsername() {
-        return users.getUserName() ;
+        return users.getUserEmail();
     }
 
     @Override
@@ -48,5 +52,8 @@ public class UserPrincipal implements UserDetails {
     @Override
     public boolean isEnabled() {
         return true;
+    }
+
+    public UserPrincipal() {
     }
 }
