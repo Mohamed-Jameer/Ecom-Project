@@ -33,10 +33,7 @@ public class ProductController {
 
     @PostMapping("/")
     public String home(@AuthenticationPrincipal UserDetails userDetails){
-//        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-//        String username = authentication.getName();
         Users user =  userService.findByUserEmail(userDetails.getUsername());
-        System.out.println(user.getUserEmail()+"////");
         return "Welcome Our Page";
     }
 

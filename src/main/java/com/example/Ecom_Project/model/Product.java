@@ -24,7 +24,7 @@ public class Product {
     private String name;
     private String description;
     private String brand;
-    private BigDecimal price;
+    private double price;
     private String category;
 
     @JsonFormat(shape = JsonFormat.Shape.STRING , pattern = "dd-MM-yyyy")
@@ -94,11 +94,11 @@ public class Product {
         this.brand = brand;
     }
 
-    public BigDecimal getPrice() {
+    public double getPrice() {
         return price;
     }
 
-    public void setPrice(BigDecimal price) {
+    public void setPrice(double price) {
         this.price = price;
     }
 
@@ -135,8 +135,7 @@ public class Product {
     }
 
 
-    public Product(int id, String name, String description, String brand, BigDecimal price, String category, Date releaseDate, boolean available, int quantity, String imageName, String imageType, byte[] imageDate) {
-        this.id = id;
+    public Product(String name, String description, String brand, double price, String category, Date releaseDate, boolean available, int quantity, String imageName, String imageType, byte[] imageDate) {
         this.name = name;
         this.description = description;
         this.brand = brand;
@@ -148,6 +147,22 @@ public class Product {
         this.imageName = imageName;
         this.imageType = imageType;
         this.imageDate = imageDate;
+    }
+
+
+    public Product(byte[] imageDate, String imageType, String imageName, int quantity, boolean available, Date releaseDate, String category, double price, String brand, String description, String name, int id) {
+        this.imageDate = imageDate;
+        this.imageType = imageType;
+        this.imageName = imageName;
+        this.quantity = quantity;
+        this.available = available;
+        this.releaseDate = releaseDate;
+        this.category = category;
+        this.price = price;
+        this.brand = brand;
+        this.description = description;
+        this.name = name;
+        this.id = id;
     }
 
     public Product() {
