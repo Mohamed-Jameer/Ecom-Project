@@ -1,17 +1,25 @@
 package com.example.Ecom_Project.model;
 
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import jakarta.persistence.*;
 
+@Entity
 public class CartItem {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int cartItemId;
     private int productId;
     private int quantity;
-    private long totalPrice;
+    private double totalPrice;
 
+    @ManyToOne(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
+    @JoinColumn(name = "cart_id")
+    @JsonIgnore
+    @JsonBackReference
+    private Cart cart;
+
+    // Getter and Setter Methods
     public int getCartItemId() {
         return cartItemId;
     }
@@ -36,21 +44,46 @@ public class CartItem {
         this.quantity = quantity;
     }
 
-    public long getTotalPrice() {
+    public double getTotalPrice() {
         return totalPrice;
     }
 
-    public void setTotalPrice(long totalPrice) {
+    public void setTotalPrice(double totalPrice) {
         this.totalPrice = totalPrice;
     }
 
-    public CartItem(int cartItemId, int productId, int quantity, long totalPrice) {
+    public Cart getCart() {
+        return cart;
+    }
+
+    public void setCart(Cart cart) {
+        this.cart = cart;
+    }
+
+    public CartItem(int cartItemId, int productId, int quantity, double totalPrice, Cart cart) {
         this.cartItemId = cartItemId;
         this.productId = productId;
         this.quantity = quantity;
         this.totalPrice = totalPrice;
+        this.cart = cart;
     }
 
-    public CartItem() {
+    public CartItem(int productId, int quantity, double totalPrice, Cart cart) {
+        this.productId = productId;
+        this.quantity = quantity;
+        this.totalPrice = totalPrice;
+        this.cart = cart;
+    }
+
+    public CartItem() {}
+
+    @Override
+    public String toString() {
+        return "CartItem{" +
+                "cartItemId=" + cartItemId +
+                ", productId=" + productId +
+                ", quantity=" + quantity +
+                ", totalPrice=" + totalPrice +
+                '}';
     }
 }
