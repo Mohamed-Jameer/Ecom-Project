@@ -28,4 +28,12 @@ public class LoginDTO {
 
     public LoginDTO() {
     }
+
+    @Override
+    public String toString() {
+        return "LoginDTO{" +
+                "userEmail='" + userEmail + '\'' +
+                ", userPassword='" + userPassword + '\'' +
+                '}';
+    }
 }
