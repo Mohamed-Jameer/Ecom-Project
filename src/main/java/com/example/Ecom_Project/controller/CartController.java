@@ -42,6 +42,12 @@ public class CartController {
         return cartService.addToCart(user.getUserId(), pid);
     }
 
+    @PostMapping("/reduceQuantity/{pid}")
+    public Cart reduceQuantity(@AuthenticationPrincipal UserDetails userDetails, @PathVariable int pid){
+        Users user = userService.findByUserEmail(userDetails.getUsername());
+        return cartService.reduceQuantityt(user.getUserId(), pid);
+    }
+
     @DeleteMapping("/deleteCartItem/{pid}")
     public Cart deleteCartItem(@AuthenticationPrincipal UserDetails userDetails, @PathVariable int pid){
             Users user = userService.findByUserEmail(userDetails.getUsername());
