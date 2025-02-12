@@ -12,8 +12,12 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 
 import java.util.HashSet;
 import java.util.List;
@@ -44,30 +48,22 @@ public class UserService {
         }
 
         Users user = new Users(registerDTO.getUserName(),registerDTO.getUserEmail(),registerDTO.getUserPhoneNo(),
-                encoder.encode(registerDTO.getUserPassword()),registerDTO.getUserGender(),registerDTO.getUserAddress(),setRole());
+                encoder.encode(registerDTO.getUserPassword()),registerDTO.getUserGender(),registerDTO.getUserAddress(),setRole("User"));
 
  userRepo.save(user);
         return new ResponseEntity<>("SuccessFull Added", HttpStatus.OK);
     }
 
-
-    private Set<Roles> setRole() {
+    private Set<Roles> setRole(String roles) {
         Set<Roles> setRoles = new HashSet<>();
-
-        // Fetch all roles with the name "User"
-        List<Roles> rolesList = roleRepo.findByName("User");
-
+        List<Roles> rolesList = roleRepo.findByName(roles);
         if (rolesList.isEmpty()) {
-            // If no roles found, create and save the "User" role
             Roles role = new Roles();
-            role.setName("User");
+            role.setName(roles);
             rolesList.add(roleRepo.save(role));
         }
-
-        // Add roles to the set (in case there are multiple roles with the same name)
         setRoles.addAll(rolesList);
-
-        return setRoles; // Return the set of roles
+        return setRoles;
     }
 
     public List<Users> getAllUser() {
@@ -94,5 +90,27 @@ public class UserService {
         return correctUser;
     }
 
+    public List<Users> deleteUserById(int uid) {
+        userRepo.deleteById(uid);
+        return userRepo.findAll();
+    }
 
+    public Users updateUserDetail(int uid , Users user) {
+        Users userDetails = new Users(uid, user.getUserName(),user.getUserEmail(),user.getUserPhoneNo(),
+                encoder.encode(user.getUserPassword()),user.getUserGender(),user.getUserAddress(),setRole("User"));
+        System.out.println(userDetails);
+        return  userRepo.save(userDetails);
+    }
+
+
+    public Users updateAdminDetail(int uid , Users user,String role) {
+        Users userUpdateDetails = new Users(uid, user.getUserName(),user.getUserEmail(),user.getUserPhoneNo(),
+                encoder.encode(user.getUserPassword()),user.getUserGender(),user.getUserAddress(),setRole(role) );
+        return  userRepo.save(userUpdateDetails);
+    }
+    public Users updateAdminDetail( Users user,String role) {
+        Users userUpdateDetails = new Users(user.getUserName(),user.getUserEmail(),user.getUserPhoneNo(),
+                encoder.encode(user.getUserPassword()),user.getUserGender(),user.getUserAddress(),setRole(role) );
+        return  userRepo.save(userUpdateDetails);
+    }
 }

@@ -11,7 +11,6 @@ import java.util.Collections;
 @Component
 public class UserPrincipal implements UserDetails {
 
-
     private Users users;
 
     public UserPrincipal(Users users){

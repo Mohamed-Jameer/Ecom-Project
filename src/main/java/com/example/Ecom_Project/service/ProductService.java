@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -36,14 +37,10 @@ public class ProductService {
     }
 
     public Product UpdateProduct(int id, Product product) {
-        // Check if product exists by ID
         if (repo.existsById(id)) {
-            // Set the ID of the incoming product to the one provided in the request
             product.setId(id);
-            // Save the updated product
             return repo.save(product);
         } else {
-            // Return null if product doesn't exist
             return null;
         }
     }
@@ -51,9 +48,19 @@ public class ProductService {
     public void DeleteProduct(int id) {
         repo.deleteById(id);
     }
-
     public List<Product> searchProduct(String keyword) {
         return  repo.searchProducts(keyword);
+    }
+
+    public List<Product> getProductName(String name) {
+        List<Product> products = getAllProducts();
+        List<Product> addProducts =  new ArrayList<>();
+        for(Product product : products){
+            if(product.getName().equalsIgnoreCase(name) || product.getCategory().equalsIgnoreCase(name) || product.getBrand().equalsIgnoreCase(name)){
+                 addProducts.add(product);
+            }
+        }
+        return addProducts;
     }
 
 

@@ -109,8 +109,8 @@ public class ProductController {
         }
     }
 
-
-    @DeleteMapping  ("/products/{id}")
+    //Delete the Product
+    @DeleteMapping ("/products/{id}")
     public  ResponseEntity<String> DeleteProduct(@PathVariable int id) {
         Product product1 = service.getProductById(id);
         if(product1 != null) {
@@ -123,11 +123,20 @@ public class ProductController {
         }
     }
 
+    // Search bar
     @GetMapping("/products/search")
     public ResponseEntity<List<Product>> searchProduct(@RequestParam String keyword){
         List<Product> products = service.searchProduct(keyword);
         return new ResponseEntity<>(products,HttpStatus.OK);
     }
+
+    // Get the products By Brand , Name , Category
+    @GetMapping("/products/searchName")
+    public List<Product> getProductName(@RequestParam String name){
+        return service.getProductName(name);
+    }
+
+
 
 
 
