@@ -8,6 +8,9 @@ import com.example.Ecom_Project.repository.CartRepository;
 import com.example.Ecom_Project.repository.ProductRepo;
 import org.hibernate.boot.CacheRegionDefinition;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -28,20 +31,21 @@ public class CartService {
     @Autowired
     private ProductService productService ;
 
+  //  @Cacheable(value = "carts")
     public  List<Cart> getAllCarts() {
         return cartRepository.findAll();
     }
 
 
 
-
+   // @Cacheable(value = "cart", key = "#userId")
     public Cart getCartByUserId(int userId) {
         return  cartRepository.findByUserId(userId);
     }
 
 
 
-
+    //@CachePut(value = "cart", key = "#userId")
     public Cart addToCart(int userId, int productId) {
         Product product = productService.getProductById(productId);
 
@@ -86,6 +90,7 @@ public class CartService {
 
 
     // This for delete CartItem
+   // @CacheEvict(value = "cart", key = "#userId")
     @Transactional
     public Cart deleteCartItems(int userId, int pid) {
         Cart cart = getCartByUserId(userId);
@@ -118,12 +123,14 @@ public class CartService {
 
 
   // This for Delete Cart
+//  @CacheEvict(value = "cart", key = "#userId")
     public String deleteCart(int userId, Long pid) {
         cartRepository.deleteById(pid);
         return "SuccessFulli Delete";
     }
 
     //Reduce the Quantity
+  //  @CachePut(value = "cart", key = "#userId")
     public Cart reduceQuantityt(int userId, int productId) {
         Product product = productService.getProductById(productId);
 
