@@ -7,6 +7,9 @@ import com.example.Ecom_Project.model.Users;
 import com.example.Ecom_Project.repository.RoleRepo;
 import com.example.Ecom_Project.repository.UserRepo;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -66,6 +69,7 @@ public class UserService {
         return setRoles;
     }
 
+   // @Cacheable(value = "users")
     public List<Users> getAllUser() {
         return  userRepo.findAll();
     }
@@ -80,6 +84,7 @@ public class UserService {
         return  "Failed";
     }
 
+    //@Cacheable(value = "user", key = "#userEmail")
     public Users findByUserEmail(String userEmail){
         Optional<Users> user = userRepo.findByUserEmail(userEmail);
         Users correctUser = null;
@@ -90,11 +95,13 @@ public class UserService {
         return correctUser;
     }
 
+  //  @CacheEvict(value = "users", allEntries = true)
     public List<Users> deleteUserById(int uid) {
         userRepo.deleteById(uid);
         return userRepo.findAll();
     }
 
+  //  @CachePut(value = "user", key = "#uid")
     public Users updateUserDetail(int uid , Users user) {
         Users userDetails = new Users(uid, user.getUserName(),user.getUserEmail(),user.getUserPhoneNo(),
                 encoder.encode(user.getUserPassword()),user.getUserGender(),user.getUserAddress(),setRole("User"));
@@ -102,12 +109,14 @@ public class UserService {
         return  userRepo.save(userDetails);
     }
 
-
+ //   @CachePut(value = "user", key = "#uid")
     public Users updateAdminDetail(int uid , Users user,String role) {
         Users userUpdateDetails = new Users(uid, user.getUserName(),user.getUserEmail(),user.getUserPhoneNo(),
                 encoder.encode(user.getUserPassword()),user.getUserGender(),user.getUserAddress(),setRole(role) );
         return  userRepo.save(userUpdateDetails);
     }
+
+   // @CachePut(value = "user", key = "#user.getUserEmail()")
     public Users updateAdminDetail( Users user,String role) {
         Users userUpdateDetails = new Users(user.getUserName(),user.getUserEmail(),user.getUserPhoneNo(),
                 encoder.encode(user.getUserPassword()),user.getUserGender(),user.getUserAddress(),setRole(role) );
