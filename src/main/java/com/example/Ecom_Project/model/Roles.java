@@ -33,4 +33,12 @@ public class Roles<R> {
 
     public Roles() {
     }
+
+    @Override
+    public String toString() {
+        return "Roles{" +
+                "roleId=" + roleId +
+                ", name='" + name + '\'' +
+                '}';
+    }
 }

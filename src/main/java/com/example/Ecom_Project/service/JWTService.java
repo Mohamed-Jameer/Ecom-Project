@@ -1,5 +1,6 @@
 package com.example.Ecom_Project.service;
 
+
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
@@ -50,8 +51,6 @@ public class JWTService {
     // Validate if the token is correct
     public boolean validToken(String token, UserDetails userDetails) {
         String username = extractUserName(token);
-        System.out.println(username+" "+userDetails.getUsername());
-        System.out.println(!isTokenExpired(token));
         return (username.equals(userDetails.getUsername()) && !isTokenExpired(token));
     }
 
