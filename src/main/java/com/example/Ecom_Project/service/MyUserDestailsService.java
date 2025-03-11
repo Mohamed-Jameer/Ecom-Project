@@ -48,7 +48,7 @@ public class MyUserDestailsService implements UserDetailsService {
 
         // Convert list of roles into a list of GrantedAuthority
         List<GrantedAuthority> authorities = correctUser.getRoles().stream()
-                .map(role -> new SimpleGrantedAuthority("ROLE_" + role)) // Prefix roles with "ROLE_"
+                .map(role -> new SimpleGrantedAuthority("ROLE_" + role.getName())) // Prefix roles with "ROLE_"
                 .collect(Collectors.toList());
 
         return org.springframework.security.core.userdetails.User

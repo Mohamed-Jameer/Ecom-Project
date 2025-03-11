@@ -3,6 +3,8 @@ package com.example.Ecom_Project.service;
 import com.example.Ecom_Project.model.Product;
 import com.example.Ecom_Project.repository.ProductRepo;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -16,10 +18,12 @@ public class ProductService {
     @Autowired
     ProductRepo repo;
 
+    //@Cacheable(value = "products")
     public List<Product> getAllProducts() {
         return repo.findAll();
     }
 
+   // @Cacheable(value = "products", key = "#productId")
     public Product getProductById(int id) {
         return repo.findById(id).orElse(null);
     }
@@ -36,6 +40,7 @@ public class ProductService {
         return repo.save(product);
     }
 
+   // @CacheEvict(value = "products", key = "#product.id")
     public Product UpdateProduct(int id, Product product) {
         if (repo.existsById(id)) {
             product.setId(id);
@@ -45,6 +50,7 @@ public class ProductService {
         }
     }
 
+   // @CacheEvict(value = "products", key = "#productId")
     public void DeleteProduct(int id) {
         repo.deleteById(id);
     }

@@ -14,14 +14,13 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-
 public class UserController {
 
     @Autowired
     private UserService userService;
 
 
-    @GetMapping("/users")
+    @GetMapping("/user/users")
     public List<Users> getAllUser(){
         return userService.getAllUser();
     }
@@ -37,7 +36,7 @@ public class UserController {
         return userService.verify(loginDTO);
     }
 
-    @PostMapping("/deleteUser/{uid}")
+    @PostMapping("/admin/deleteUser/{uid}")
     public List<Users> deleteUserById(@PathVariable int uid){
         return userService.deleteUserById(uid);
     }
@@ -49,7 +48,7 @@ public class UserController {
     }
 
 
-    @PutMapping("/updateAdminDetail")
+    @PutMapping("/admin/updateAdminDetail")
     public Users updateAdminDetail(@AuthenticationPrincipal UserDetails userDetails, @RequestBody Users user , @RequestParam String role){
         Users userIdentity = userService.findByUserEmail(user.getUserEmail());
         if(userIdentity == null){
