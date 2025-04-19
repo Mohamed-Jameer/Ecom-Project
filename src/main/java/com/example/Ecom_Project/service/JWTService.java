@@ -29,6 +29,8 @@ public class JWTService {
     }
 
     public String generateToken(String userName) {
+
+        System.out.println("generateToken"+userName);
         Map<String, Object> claims = new HashMap<>();
         return Jwts.builder()
                 .setClaims(claims) // Set claims here
@@ -37,7 +39,7 @@ public class JWTService {
                 .setExpiration(new Date(System.currentTimeMillis() + 60 * 60 * 30 * 1000)) // 30 minutes expiry
                 .signWith(getKey())
                 .compact();
-    }
+}
 
     private Key getKey() {
         byte[] keyBytes = Decoders.BASE64.decode(SECRET_KEY);

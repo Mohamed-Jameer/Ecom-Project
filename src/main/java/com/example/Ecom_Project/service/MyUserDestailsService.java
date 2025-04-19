@@ -30,31 +30,19 @@ public class MyUserDestailsService implements UserDetailsService {
         this.repo = repo;
     }
 
-    @Override
-    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
 
-        Optional<Users> user = repo.findByUserEmail(username);
-        Users correctUser = null;
-        if (user.isPresent()) {
-            correctUser = user.get();
+        @Override
+        public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+            System.out.println("loadUserByUsername");
+            Users user = repo.findByUserEmail(username)
+                    .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+
+            List<GrantedAuthority> authorities = user.getRoles().stream()
+                    .map(role -> new SimpleGrantedAuthority("ROLE_" + role.getName()))
+                    .collect(Collectors.toList());
+
+            return new org.springframework.security.core.userdetails.User(
+                    user.getUserEmail(), user.getUserPassword(), authorities);
         }
 
-        if (user == null) {
-            System.out.println("User Not Found");
-            throw new UsernameNotFoundException("User Not Found");
-        }
-        System.out.println(correctUser);
-        System.out.println("Load "+ correctUser.getUserEmail());
-
-        // Convert list of roles into a list of GrantedAuthority
-        List<GrantedAuthority> authorities = correctUser.getRoles().stream()
-                .map(role -> new SimpleGrantedAuthority("ROLE_" + role.getName())) // Prefix roles with "ROLE_"
-                .collect(Collectors.toList());
-
-        return org.springframework.security.core.userdetails.User
-                .withUsername(correctUser.getUserEmail())
-                .password(correctUser.getUserPassword())
-                .authorities(authorities) // Assign multiple roles
-                .build();
-    }
-    }
+}
