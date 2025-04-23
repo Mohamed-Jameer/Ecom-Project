@@ -32,11 +32,7 @@ public class ProductController {
     private UserService userService;
 
 
-    @PostMapping("/")
-    public String home(@AuthenticationPrincipal UserDetails userDetails){
-        Users user =  userService.findByUserEmail(userDetails.getUsername());
-        return "Welcome Our Page";
-    }
+
 
     @GetMapping("/products")
     public ResponseEntity<List<Product>> getAllProducts(){
