@@ -57,7 +57,7 @@ public class UserService {
         return new ResponseEntity<>("SuccessFull Added", HttpStatus.OK);
     }
 
-    private Set<Roles> setRole(String roles) {
+    public Set<Roles> setRole(String roles) {
         Set<Roles> setRoles = new HashSet<>();
         List<Roles> rolesList = roleRepo.findByName(roles);
         if (rolesList.isEmpty()) {
