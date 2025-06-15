@@ -1,5 +1,7 @@
 package com.example.Ecom_Project.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import org.springframework.stereotype.Component;
 
@@ -20,12 +22,14 @@ public class Users {
     private String userGender;
     private String userAddress;
 
-    @ManyToMany(fetch = FetchType.EAGER)
+
+    @ManyToMany(fetch = FetchType.EAGER, cascade = CascadeType.MERGE)
     @JoinTable(
             name = "user_roles",  // Better naming for the join table
             joinColumns = @JoinColumn(name = "userId"),  // Changed from 'userId' to 'customerId'
             inverseJoinColumns = @JoinColumn(name = "roleId")
     )
+    @JsonIgnore
     private Set<Roles> roles = new HashSet<>();
 
 

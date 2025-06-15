@@ -7,27 +7,20 @@ import com.example.Ecom_Project.model.Users;
 import com.example.Ecom_Project.repository.RoleRepo;
 import com.example.Ecom_Project.repository.UserRepo;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.CachePut;
-import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 
 @Service
+@CacheConfig(cacheNames = {"users", "user"})
 public class UserService {
 
     @Autowired
@@ -40,86 +33,122 @@ public class UserService {
     private JWTService jwtService;
 
     @Autowired
-    AuthenticationManager authManager;
+    private AuthenticationManager authManager;
 
-    private BCryptPasswordEncoder encoder = new BCryptPasswordEncoder(12);
+    private final BCryptPasswordEncoder encoder = new BCryptPasswordEncoder(12);
 
+    // ✅ Register user (no cache)
     public ResponseEntity<String> register(RegisterDTO registerDTO) {
-
-        if(userRepo.existsByUserEmail(registerDTO.getUserEmail())){
-          return new ResponseEntity<>("Email already exists", HttpStatus.CONFLICT);
+        if (userRepo.existsByUserEmail(registerDTO.getUserEmail())) {
+            return new ResponseEntity<>("Email already exists", HttpStatus.CONFLICT);
         }
 
-        Users user = new Users(registerDTO.getUserName(),registerDTO.getUserEmail(),registerDTO.getUserPhoneNo(),
-                encoder.encode(registerDTO.getUserPassword()),registerDTO.getUserGender(),registerDTO.getUserAddress(),setRole("User"));
+        Users user = new Users(
+                registerDTO.getUserName(),
+                registerDTO.getUserEmail(),
+                registerDTO.getUserPhoneNo(),
+                encoder.encode(registerDTO.getUserPassword()),
+                registerDTO.getUserGender(),
+                registerDTO.getUserAddress(),
+                setRole("User")
+        );
 
- userRepo.save(user);
-        return new ResponseEntity<>("SuccessFull Added", HttpStatus.OK);
+        userRepo.save(user);
+        return new ResponseEntity<>("User registered successfully", HttpStatus.OK);
     }
 
-    public Set<Roles> setRole(String roles) {
-        Set<Roles> setRoles = new HashSet<>();
-        List<Roles> rolesList = roleRepo.findByName(roles);
+    // ✅ Assign role
+    public Set<Roles> setRole(String roleName) {
+        Set<Roles> roles = new HashSet<>();
+        List<Roles> rolesList = roleRepo.findByName(roleName);
         if (rolesList.isEmpty()) {
-            Roles role = new Roles();
-            role.setName(roles);
-            rolesList.add(roleRepo.save(role));
+            Roles newRole = new Roles();
+            newRole.setName(roleName);
+            rolesList.add(roleRepo.save(newRole));
         }
-        setRoles.addAll(rolesList);
-        return setRoles;
+        roles.addAll(rolesList);
+        return roles;
     }
 
-   // @Cacheable(value = "users")
+    // ✅ Get all users (cache result)
+    @Cacheable("users")
     public List<Users> getAllUser() {
-        return  userRepo.findAll();
-    }
-
-    public String verify(LoginDTO loginDTO) {
-        Authentication authentication =
-                authManager.authenticate(new UsernamePasswordAuthenticationToken(loginDTO.getUserEmail(),loginDTO.getUserPassword()));
-        if(authentication.isAuthenticated()){
-            return  jwtService.generateToken(loginDTO.getUserEmail());
-        }
-
-        return  "Failed";
-    }
-
-    //@Cacheable(value = "user", key = "#userEmail")
-    public Users findByUserEmail(String userEmail){
-        Optional<Users> user = userRepo.findByUserEmail(userEmail);
-        Users correctUser = null;
-        if (user.isPresent()) {
-            correctUser = user.get();
-        }
-
-        return correctUser;
-    }
-
-  //  @CacheEvict(value = "users", allEntries = true)
-    public List<Users> deleteUserById(int uid) {
-        userRepo.deleteById(uid);
         return userRepo.findAll();
     }
 
-  //  @CachePut(value = "user", key = "#uid")
-    public Users updateUserDetail(int uid , Users user) {
-        Users userDetails = new Users(uid, user.getUserName(),user.getUserEmail(),user.getUserPhoneNo(),
-                encoder.encode(user.getUserPassword()),user.getUserGender(),user.getUserAddress(),setRole("User"));
-        System.out.println(userDetails);
-        return  userRepo.save(userDetails);
+    // ✅ Login and generate JWT (no cache)
+    public String verify(LoginDTO loginDTO) {
+        Authentication authentication = authManager.authenticate(
+                new UsernamePasswordAuthenticationToken(loginDTO.getUserEmail(), loginDTO.getUserPassword())
+        );
+        return authentication.isAuthenticated()
+                ? jwtService.generateToken(loginDTO.getUserEmail())
+                : "Invalid credentials";
     }
 
- //   @CachePut(value = "user", key = "#uid")
-    public Users updateAdminDetail(int uid , Users user,String role) {
-        Users userUpdateDetails = new Users(uid, user.getUserName(),user.getUserEmail(),user.getUserPhoneNo(),
-                encoder.encode(user.getUserPassword()),user.getUserGender(),user.getUserAddress(),setRole(role) );
-        return  userRepo.save(userUpdateDetails);
+
+    // ✅ Delete user (evict from cache)
+    @CacheEvict(value = {"user", "users"}, allEntries = true)
+    public List<Users> deleteUserById(int uid) {
+        userRepo.deleteById(uid);
+        return userRepo.findAll(); // repopulate cache on next call
     }
 
-   // @CachePut(value = "user", key = "#user.getUserEmail()")
-    public Users updateAdminDetail( Users user,String role) {
-        Users userUpdateDetails = new Users(user.getUserName(),user.getUserEmail(),user.getUserPhoneNo(),
-                encoder.encode(user.getUserPassword()),user.getUserGender(),user.getUserAddress(),setRole(role) );
-        return  userRepo.save(userUpdateDetails);
+    // ✅ Update user details (cache update)
+    @CachePut(value = "user", key = "#uid")
+    @CacheEvict(value = "users", allEntries = true)
+    public Users updateUserDetail(int uid, Users user) {
+        Users updated = new Users(
+                uid,
+                user.getUserName(),
+                user.getUserEmail(),
+                user.getUserPhoneNo(),
+                encoder.encode(user.getUserPassword()),
+                user.getUserGender(),
+                user.getUserAddress(),
+                setRole("User")
+        );
+        return userRepo.save(updated);
     }
+
+    // ✅ Admin update by ID (cache put)
+    @CachePut(value = "user", key = "#uid")
+    @CacheEvict(value = "users", allEntries = true)
+    public Users updateAdminDetail(int uid, Users user, String role) {
+        Users updated = new Users(
+                uid,
+                user.getUserName(),
+                user.getUserEmail(),
+                user.getUserPhoneNo(),
+                encoder.encode(user.getUserPassword()),
+                user.getUserGender(),
+                user.getUserAddress(),
+                setRole(role)
+        );
+        return userRepo.save(updated);
+    }
+
+    // ✅ Admin update without ID (cache put)
+    @CachePut(value = "user", key = "#user.getUserEmail()")
+    @CacheEvict(value = "users", allEntries = true)
+    public Users updateAdminDetail(Users user, String role) {
+        Users updated = new Users(
+                user.getUserName(),
+                user.getUserEmail(),
+                user.getUserPhoneNo(),
+                encoder.encode(user.getUserPassword()),
+                user.getUserGender(),
+                user.getUserAddress(),
+                setRole(role)
+        );
+        return userRepo.save(updated);
+    }
+
+
+    @Cacheable(value = "user", key = "#userEmail")
+    @Transactional
+    public Users findByUserEmail(String userEmail) {
+        return userRepo.findByUserEmailWithRoles(userEmail).orElse(null);
+    }
+
 }
