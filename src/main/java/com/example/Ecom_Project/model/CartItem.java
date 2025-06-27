@@ -16,7 +16,6 @@ public class CartItem {
     @ManyToOne(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @JoinColumn(name = "cart_id")
     @JsonIgnore
-    @JsonBackReference
     private Cart cart;
 
     // Getter and Setter Methods

@@ -13,8 +13,7 @@ public class Cart {
     private int userId;
     private double totalOrderPrice;
 
-    @OneToMany(mappedBy = "cart", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    @JsonManagedReference
+    @OneToMany(mappedBy = "cart", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     private List<CartItem> cartItems = new ArrayList<>();
 
     // Getter and Setter Methods
