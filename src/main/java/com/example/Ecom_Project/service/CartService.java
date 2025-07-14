@@ -1,5 +1,8 @@
 package com.example.Ecom_Project.service;
 
+import com.example.Ecom_Project.dto.CartDTO;
+import com.example.Ecom_Project.dto.CartItemDTO;
+import com.example.Ecom_Project.dto.ProductDTO;
 import com.example.Ecom_Project.model.Cart;
 import com.example.Ecom_Project.model.CartItem;
 import com.example.Ecom_Project.model.Product;
@@ -8,6 +11,7 @@ import com.example.Ecom_Project.repository.CartRepository;
 import com.example.Ecom_Project.repository.ProductRepo;
 import org.hibernate.boot.CacheRegionDefinition;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
@@ -20,6 +24,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Service
+@CacheConfig(cacheNames = {"cart"})
 public class CartService {
 
     @Autowired
@@ -31,23 +36,30 @@ public class CartService {
     @Autowired
     private ProductService productService ;
 
-  //  @Cacheable(value = "carts")
-    public  List<Cart> getAllCarts() {
-        return cartRepository.findAll();
+    @Cacheable(key = "'allCarts'")
+    public List<CartDTO> getAllCarts() {
+        List<Cart> carts = cartRepository.findAll();
+
+        return carts.stream().map(cart -> {
+            List<CartItemDTO> itemDTOs = cart.getCartItems().stream()
+                    .map(item -> new CartItemDTO(item.getProductId(), item.getQuantity(), item.getTotalPrice()))
+                    .toList();
+            return new CartDTO(cart.getCartId(), cart.getUserId(), cart.getTotalOrderPrice(), itemDTOs);
+        }).toList();
     }
 
 
 
-   // @Cacheable(value = "cart", key = "#userId")
+    @Cacheable(key = "#userId")
     public Cart getCartByUserId(int userId) {
         return  cartRepository.findByUserId(userId);
     }
 
 
 
-    //@CachePut(value = "cart", key = "#userId")
+    @CachePut(key = "#userId")
     public Cart addToCart(int userId, int productId) {
-        Product product = productService.getProductById(productId);
+        ProductDTO product = productService.getProductById(productId);
 
         Cart cart = cartRepository.findByUserId(userId);
 
@@ -89,8 +101,7 @@ public class CartService {
 
 
 
-    // This for delete CartItem
-   // @CacheEvict(value = "cart", key = "#userId")
+    @CachePut(key = "#userId")
     @Transactional
     public Cart deleteCartItems(int userId, int pid) {
         Cart cart = getCartByUserId(userId);
@@ -122,17 +133,15 @@ public class CartService {
     }
 
 
-  // This for Delete Cart
-//  @CacheEvict(value = "cart", key = "#userId")
+    @CacheEvict(key = "#userId")
     public String deleteCart(int userId, Long pid) {
         cartRepository.deleteById(pid);
         return "SuccessFulli Delete";
     }
 
-    //Reduce the Quantity
-  //  @CachePut(value = "cart", key = "#userId")
+   @CachePut(value = "cart", key = "#userId")
     public Cart reduceQuantityt(int userId, int productId) {
-        Product product = productService.getProductById(productId);
+        ProductDTO product = productService.getProductById(productId);
 
         Cart cart = cartRepository.findByUserId(userId);
 

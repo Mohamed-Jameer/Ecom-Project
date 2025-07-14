@@ -29,111 +29,75 @@ public class UserController {
     @Autowired
     private JWTService jwtService;
 
-//    @GetMapping("/home")
-//    public Map<String, String> homePage(HttpServletRequest request) {
-//        String jwtToken = (String) request.getSession().getAttribute("jwtToken");
-//
-//        System.out.println("JWT"+" "+ jwtToken);
-//
-//        Map<String, String> response = new HashMap<>();
-//        response.put("token", jwtToken != null ? jwtToken : "Token not found");
-//        return response;
-//
-//    }
-
-    //  http://localhost:8080/swagger-ui/index.html
-
-    @GetMapping("/home")
-    public String homePage(HttpServletRequest request) {
-        String jwtToken = (String) request.getSession().getAttribute("jwtToken");
-
-        System.out.println("JWT"+" "+ jwtToken);
-
-        Map<String, String> response = new HashMap<>();
-        response.put("token", jwtToken != null ? jwtToken : "Token not found");
-        return jwtToken;
-    }
-
     @GetMapping("/")
     public String home() {
         return "Welcome to Home!";
     }
 
-//    @GetMapping("/userDetails")
-//    public String getUserDetails(Model model, OAuth2AuthenticationToken authentication) {
-//        OAuth2User user = authentication.getPrincipal();
-//
-//        // Retrieve user information
-//        String name = user.getAttribute("name");
-//        String email = user.getAttribute("email");
-//        String picture = user.getAttribute("picture");
-//
-//        // Add to model to display in the view
-//        model.addAttribute("name", name);
-//        model.addAttribute("email", email);
-//        model.addAttribute("picture", picture);
-//
-//        return "userDetails"; // View name
-//    }
+    @GetMapping("/home")
+    public String homePage(HttpServletRequest request) {
+        String jwtToken = (String) request.getSession().getAttribute("jwtToken");
+        return jwtToken != null ? jwtToken : "Token not found";
+    }
 
     @GetMapping("/loginSuccess")
     public String loginSuccess(OAuth2AuthenticationToken authentication, Model model) {
-
         OAuth2User user = authentication.getPrincipal();
         String username = user.getAttribute("name");
-
-        // Generate JWT token
         String jwtToken = jwtService.generateToken(username);
-
-        // Add JWT token to the model
         model.addAttribute("jwtToken", jwtToken);
-
-        return "jwtTokenPage";  // Name of your view
+        return "jwtTokenPage";
     }
 
-
-    @GetMapping("/user/users")
-    public List<Users> getAllUser(){
-        return userService.getAllUser();
-    }
-
+    // ✅ Public: Register
     @PostMapping("/register")
-    public ResponseEntity<String> register(@RequestBody RegisterDTO registerDTO){
+    public ResponseEntity<String> register(@RequestBody RegisterDTO registerDTO) {
         return userService.register(registerDTO);
     }
 
+    // ✅ Public: Login
     @PostMapping("/login")
-    public String login(@RequestBody LoginDTO loginDTO){
+    public String login(@RequestBody LoginDTO loginDTO) {
         System.out.println(loginDTO);
         return userService.verify(loginDTO);
     }
 
+    // 🔐 ADMIN Only: Get all users
+    @PreAuthorize("hasRole('ADMIN')")
+    @GetMapping("/user/users")
+    public List<Users> getAllUser() {
+        return userService.getAllUser();
+    }
+
+    // 🔐 ADMIN Only: Delete user by ID
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/admin/deleteUser/{uid}")
-    public List<Users> deleteUserById(@PathVariable int uid){
+    public List<Users> deleteUserById(@PathVariable int uid) {
         return userService.deleteUserById(uid);
     }
 
+    // 🔐 USER or ADMIN: Update own user details
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
     @PutMapping("/updateUserDetail")
-    public Users updateUserDetail(@AuthenticationPrincipal UserDetails userDetails, @RequestBody Users user){
+    public Users updateUserDetail(@AuthenticationPrincipal UserDetails userDetails,
+                                  @RequestBody Users user) {
         Users userIdentity = userService.findByUserEmail(userDetails.getUsername());
-        return userService.updateUserDetail(userIdentity.getUserId(),user);
+        return userService.updateUserDetail(userIdentity.getUserId(), user);
     }
 
-
+    // 🔐 ADMIN Only: Update admin details
+    @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/admin/updateAdminDetail")
-    public Users updateAdminDetail(@AuthenticationPrincipal UserDetails userDetails, @RequestBody Users user , @RequestParam String role){
+    public Users updateAdminDetail(@AuthenticationPrincipal UserDetails userDetails,
+                                   @RequestBody Users user,
+                                   @RequestParam String role) {
         Users userIdentity = userService.findByUserEmail(user.getUserEmail());
-        if(userIdentity == null){
-            return userService.updateAdminDetail(user,role);
+        if (userIdentity == null) {
+            return userService.updateAdminDetail(user, role);
         }
-        return userService.updateAdminDetail(userIdentity.getUserId(),user,role);
+        return userService.updateAdminDetail(userIdentity.getUserId(), user, role);
     }
-
-
-
-
-
-
 }
+
 
 

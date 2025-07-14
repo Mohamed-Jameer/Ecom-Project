@@ -1,19 +1,13 @@
 package com.example.Ecom_Project.controller;
 
+import com.example.Ecom_Project.dto.ProductDTO;
 import com.example.Ecom_Project.model.Product;
-import com.example.Ecom_Project.model.UserPrincipal;
-import com.example.Ecom_Project.model.Users;
 import com.example.Ecom_Project.service.ProductService;
 import com.example.Ecom_Project.service.UserService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.cache.annotation.Cacheable;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.http.*;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -22,120 +16,90 @@ import java.util.List;
 
 @RestController
 @CrossOrigin
-@RequestMapping("/api")
+@RequestMapping("/api/products")
 public class ProductController {
 
     @Autowired
-    private  ProductService service;
+    private ProductService service;
 
     @Autowired
     private UserService userService;
 
-
-
-
-    @GetMapping("/products")
-    public ResponseEntity<List<Product>> getAllProducts(){
-     return new ResponseEntity<>(service.getAllProducts(), HttpStatus.OK);
+    @GetMapping("/test-exception")
+    public void testException() {
+        service.throwTestException();
     }
 
-    @GetMapping("/products/{id}")
-    public ResponseEntity<Product> getProduct(@PathVariable int id){
-       Product product = service.getProductById(id);
-       if(product!=null) {
-           return new ResponseEntity<>(product, HttpStatus.OK);
-       }
-       else{
-           return new ResponseEntity<>( HttpStatus.NOT_FOUND);
-       }
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
+    @GetMapping
+    public ResponseEntity<List<ProductDTO>> getAllProducts() {
+        return ResponseEntity.ok(service.getAllProducts());
     }
 
-//    @PostMapping("/addProduct")
-//    public ResponseEntity<?> addProduct(@RequestPart("product") Product product,
-//                                        @RequestPart("imageFile") MultipartFile imageFile) {
-//        System.out.println("This is Add Method");
-//        try {
-//            System.out.println("Received product: " + product);
-//            System.out.println("Received file: " + imageFile.getOriginalFilename());
-//
-//            Product savedProduct = service.addProduct(product, imageFile);
-//            return new ResponseEntity<>(savedProduct, HttpStatus.CREATED);
-//        } catch (IOException e) {
-//            return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
-//        }
-//    }
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
+    @GetMapping("/{id}")
+    public ResponseEntity<ProductDTO> getProduct(@PathVariable int id) {
+        ProductDTO product = service.getProductById(id);
+        return product != null ?
+                ResponseEntity.ok(product) :
+                ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+    }
 
-
-//    @PostMapping("/addProduct")
-//    public Product addProduct(@RequestBody Product product) {
-//        return  service.addProduct(product);
-//    }
-
-    @PostMapping("/addProduct")
-    public ResponseEntity<?> addProduct(
-            @RequestPart("product") String productJson,  // Receive the product as a JSON string
-            @RequestPart("imageFile") MultipartFile imageFile) {  // Receive the image file
-
-        System.out.println("Product Controller");
+    @PreAuthorize("hasRole('ADMIN')")
+    @PostMapping("/add")
+    public ResponseEntity<?> addProduct(@RequestPart("product") String productJson,
+                                        @RequestPart("imageFile") MultipartFile imageFile) {
         try {
-            // Convert productJson (String) to Product object using ObjectMapper
             ObjectMapper mapper = new ObjectMapper();
             Product product = mapper.readValue(productJson, Product.class);
-
-            System.out.println("Received product: " + product);
-            System.out.println("Received file: " + imageFile.getOriginalFilename());
-
-            // Save product and file
-            Product savedProduct = service.addProduct(product, imageFile);
-            return new ResponseEntity<>(savedProduct, HttpStatus.CREATED);
+            Product saved = service.addProduct(product, imageFile);
+            return ResponseEntity.status(HttpStatus.CREATED).body(new ProductDTO(saved));
         } catch (IOException e) {
-            return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
         }
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
+    @PutMapping("/{id}")
+    public ResponseEntity<String> updateProduct(@PathVariable int id, @RequestBody Product product) {
+        Product updated = service.updateProduct(id, product);
+        return updated != null ?
+                ResponseEntity.ok("Product updated successfully") :
+                ResponseEntity.status(HttpStatus.NOT_FOUND).body("Product not found");
+    }
 
-
-    @PutMapping("/products/{id}")
-    public ResponseEntity<String> UpdateProduct(@PathVariable int id, @RequestBody Product product) {
-        Product updatedProduct = service.UpdateProduct(id, product);
-
-        if (updatedProduct != null) {
-            return new ResponseEntity<>("Product updated successfully", HttpStatus.OK);
+    @PreAuthorize("hasRole('ADMIN')")
+    @DeleteMapping("/{id}")
+    public ResponseEntity<String> deleteProduct(@PathVariable int id) {
+        Product found = service.getProductEntityById(id);
+        if (found != null) {
+            service.deleteProduct(id);
+            return ResponseEntity.ok("Deleted");
         } else {
-            return new ResponseEntity<>("Product not found", HttpStatus.NOT_FOUND);
+            return ResponseEntity.badRequest().body("Product not found");
         }
     }
 
-    //Delete the Product
-    @DeleteMapping ("/products/{id}")
-    public  ResponseEntity<String> DeleteProduct(@PathVariable int id) {
-        Product product1 = service.getProductById(id);
-        if(product1 != null) {
-            service.DeleteProduct(id);
-            return  new ResponseEntity<>("Deleted" , HttpStatus.OK);
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
+    @GetMapping("/search")
+    public ResponseEntity<List<ProductDTO>> searchProduct(@RequestParam String keyword) {
+        return ResponseEntity.ok(service.searchProduct(keyword));
+    }
+
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
+    @GetMapping("/searchName")
+    public ResponseEntity<List<ProductDTO>> getProductName(@RequestParam String name) {
+        return ResponseEntity.ok(service.getProductName(name));
+    }
+
+    @GetMapping("/image/{id}")
+    public ResponseEntity<byte[]> getImage(@PathVariable int id) {
+        Product product = service.getProductEntityById(id);
+        if (product == null || product.getImageDate() == null) {
+            return ResponseEntity.notFound().build();
         }
-        else{
-            return  new ResponseEntity<>("Not Deleted" , HttpStatus.BAD_REQUEST);
-
-        }
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_TYPE, product.getImageType())
+                .body(product.getImageDate());
     }
-
-    // Search bar
-    @GetMapping("/products/search")
-    public ResponseEntity<List<Product>> searchProduct(@RequestParam String keyword){
-        List<Product> products = service.searchProduct(keyword);
-        return new ResponseEntity<>(products,HttpStatus.OK);
-    }
-
-    // Get the products By Brand , Name , Category
-    @GetMapping("/products/searchName")
-    public List<Product> getProductName(@RequestParam String name){
-        return service.getProductName(name);
-    }
-
-
-
-
-
-
 }

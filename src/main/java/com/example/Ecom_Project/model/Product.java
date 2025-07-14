@@ -138,4 +138,52 @@ public class Product implements Serializable {
                 ", imageDate=" + Arrays.toString(imageDate) +
                 '}';
     }
+
+    public int getId() {
+        return id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public String getBrand() {
+        return brand;
+    }
+
+    public double getPrice() {
+        return price;
+    }
+
+    public String getCategory() {
+        return category;
+    }
+
+    public Date getReleaseDate() {
+        return releaseDate;
+    }
+
+    public boolean isAvailable() {
+        return available;
+    }
+
+    public int getQuantity() {
+        return quantity;
+    }
+
+    public String getImageName() {
+        return imageName;
+    }
+
+    public String getImageType() {
+        return imageType;
+    }
+
+    public byte[] getImageDate() {
+        return imageDate;
+    }
 }

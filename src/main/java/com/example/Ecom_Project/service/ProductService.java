@@ -1,5 +1,6 @@
 package com.example.Ecom_Project.service;
 
+import com.example.Ecom_Project.dto.ProductDTO;
 import com.example.Ecom_Project.model.Product;
 import com.example.Ecom_Project.repository.ProductRepo;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -9,72 +10,75 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class ProductService {
 
     @Autowired
-    ProductRepo repo;
+    private ProductRepo repo;
 
-    //@Cacheable(value = "products")
-    public List<Product> getAllProducts() {
-        return repo.findAll();
+    @Cacheable(value = "products")
+    public List<ProductDTO> getAllProducts() {
+        return repo.findAll()
+                .stream()
+                .map(ProductDTO::new)
+                .collect(Collectors.toList());
     }
 
-   // @Cacheable(value = "products", key = "#productId")
-    public Product getProductById(int id) {
-        return repo.findById(id).orElse(null);
+    @Cacheable(value = "product", key = "#id")
+    public ProductDTO getProductById(int id) {
+        return repo.findById(id)
+                .map(ProductDTO::new)
+                .orElse(null);
     }
 
-//    public Product addProduct(Product product, MultipartFile imageFile) {
-//        return repo.save(product);
-//    }
-
-    public Product addProduct(Product product, MultipartFile imageFile) throws IOException, IOException {
-        System.out.println("Product Service");
+    @CacheEvict(value = {"products", "product"}, allEntries = true)
+    public Product addProduct(Product product, MultipartFile imageFile) throws IOException {
         product.setImageName(imageFile.getOriginalFilename());
         product.setImageType(imageFile.getContentType());
         product.setImageDate(imageFile.getBytes());
         return repo.save(product);
     }
 
-   // @CacheEvict(value = "products", key = "#product.id")
-    public Product UpdateProduct(int id, Product product) {
+    @CacheEvict(value = {"products", "product"}, key = "#id")
+    public Product updateProduct(int id, Product product) {
         if (repo.existsById(id)) {
             product.setId(id);
             return repo.save(product);
-        } else {
-            return null;
         }
+        return null;
     }
 
-   // @CacheEvict(value = "products", key = "#productId")
-    public void DeleteProduct(int id) {
+    @CacheEvict(value = {"products", "product"}, key = "#id")
+    public void deleteProduct(int id) {
         repo.deleteById(id);
     }
-    public List<Product> searchProduct(String keyword) {
-        return  repo.searchProducts(keyword);
+
+    public List<ProductDTO> searchProduct(String keyword) {
+        return repo.searchProducts(keyword)
+                .stream()
+                .map(ProductDTO::new)
+                .collect(Collectors.toList());
     }
 
-    public List<Product> getProductName(String name) {
-        List<Product> products = getAllProducts();
-        List<Product> addProducts =  new ArrayList<>();
-        for(Product product : products){
-            if(product.getName().equalsIgnoreCase(name) || product.getCategory().equalsIgnoreCase(name) || product.getBrand().equalsIgnoreCase(name)){
-                 addProducts.add(product);
-            }
-        }
-        return addProducts;
+    public List<ProductDTO> getProductName(String name) {
+        return repo.findAll()
+                .stream()
+                .filter(p -> p.getName().equalsIgnoreCase(name) ||
+                        p.getBrand().equalsIgnoreCase(name) ||
+                        p.getCategory().equalsIgnoreCase(name))
+                .map(ProductDTO::new)
+                .collect(Collectors.toList());
     }
 
+    public Product getProductEntityById(int id) {
+        return repo.findById(id).orElse(null);
+    }
 
-//    public Product addProduct(Product product, MultipartFile imageFile) throws IOException {
-//        System.out.println("This is Add Method");
-//        product.setImageName(imageFile.getOriginalFilename());
-//        product.setImageType(imageFile.getContentType());
-//        product.setImageDate(imageFile.getBytes());
-//        return repo.save(product);
-//    }
+    public void throwTestException() {
+        throw new RuntimeException("This is a test exception for AOP");
+    }
 }

@@ -1,14 +1,18 @@
 package com.example.Ecom_Project.model;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 
+import java.util.Set;
+
 @Entity
-public class Roles<R> {
+public class Roles{
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int roleId;
     private String name;
+
 
     public int getRoleId() {
         return roleId;
