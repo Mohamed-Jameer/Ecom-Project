@@ -46,8 +46,7 @@ public class UserController {
         String username = user.getAttribute("name");
         String jwtToken = jwtService.generateToken(username);
         model.addAttribute("jwtToken", jwtToken);
-        return "jwtTokenPage";
-    }
+        return "redirect:http://localhost:3000/oauth2/redirect?token=" + jwtToken;    }
 
     // ✅ Public: Register
     @PostMapping("/register")
