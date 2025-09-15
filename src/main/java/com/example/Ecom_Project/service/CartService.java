@@ -2,14 +2,12 @@ package com.example.Ecom_Project.service;
 
 import com.example.Ecom_Project.dto.CartDTO;
 import com.example.Ecom_Project.dto.CartItemDTO;
-import com.example.Ecom_Project.dto.ProductDTO;
 import com.example.Ecom_Project.model.Cart;
 import com.example.Ecom_Project.model.CartItem;
 import com.example.Ecom_Project.model.Product;
 import com.example.Ecom_Project.repository.CartItemRepository;
 import com.example.Ecom_Project.repository.CartRepository;
 import com.example.Ecom_Project.repository.ProductRepo;
-import org.hibernate.boot.CacheRegionDefinition;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.CacheEvict;
@@ -17,8 +15,8 @@ import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
@@ -34,37 +32,63 @@ public class CartService {
     private CartRepository cartRepository;
 
     @Autowired
-    private ProductService productService ;
+    private ProductService productService;
 
+    @Autowired
+    private ProductRepo productRepo;
+
+    @Transactional
     @Cacheable(key = "'allCarts'")
     public List<CartDTO> getAllCarts() {
         List<Cart> carts = cartRepository.findAll();
 
         return carts.stream().map(cart -> {
             List<CartItemDTO> itemDTOs = cart.getCartItems().stream()
-                    .map(item -> new CartItemDTO(item.getProductId(), item.getQuantity(), item.getTotalPrice()))
+                    .map(item -> {
+                        Product product = productRepo.findById(item.getProductId()).orElse(null);
+                        String productName = (product != null) ? product.getName() : "Unknown Product";
+                        String brand = (product != null) ? product.getBrand() : "N/A";
+                        String description = (product != null) ? product.getDescription() : "N/A";
+                        String image = (product != null && product.getImageDate() != null) ? Base64.getEncoder().encodeToString(product.getImageDate()) : null;
+
+                        return new CartItemDTO(
+                                item.getCartItemId(),
+                                item.getProductId(),
+                                productName,
+                                item.getTotalPrice() / item.getQuantity(),
+                                item.getQuantity(),
+                                item.getTotalPrice(),
+                                brand, // ✅ Populate brand
+                                description, // ✅ Populate description
+                                image // ✅ Populate image
+                        );
+                    })
                     .toList();
             return new CartDTO(cart.getCartId(), cart.getUserId(), cart.getTotalOrderPrice(), itemDTOs);
         }).toList();
     }
 
 
-
+    @Transactional
     @Cacheable(key = "#userId")
-    public Cart getCartByUserId(int userId) {
-        return  cartRepository.findByUserId(userId);
+    public CartDTO getCartByUserId(int userId) {
+        Cart cart = cartRepository.findByUserId(userId);
+        if (cart == null) {
+            return null;
+        }
+        return convertToDto(cart);
     }
 
 
-
+    @Transactional
     @CachePut(key = "#userId")
-    public Cart addToCart(int userId, int productId) {
-        ProductDTO product = productService.getProductById(productId);
+    public CartDTO addToCart(int userId, int productId) {
+        Product product = productRepo.findById(productId).orElseThrow(() -> new RuntimeException("Product not found"));
 
         Cart cart = cartRepository.findByUserId(userId);
 
         if (cart == null) {
-            cart = new Cart(); // Assign new cart to the cart variable
+            cart = new Cart();
             cart.setUserId(userId);
             cart.setTotalOrderPrice(0);
             cart.setCartItems(new ArrayList<>());
@@ -80,13 +104,19 @@ public class CartService {
             }
         }
 
+        int newQuantity = (existingCartItem != null) ? existingCartItem.getQuantity() + 1 : 1;
+
+        if (newQuantity > product.getQuantity()) {
+            throw new RuntimeException("Product is out of stock.");
+        }
+
         if (existingCartItem != null) {
-            existingCartItem.setQuantity(existingCartItem.getQuantity() + 1);
-            existingCartItem.setTotalPrice(existingCartItem.getQuantity() * product.getPrice());
+            existingCartItem.setQuantity(newQuantity);
+            existingCartItem.setTotalPrice(newQuantity * product.getPrice());
         } else {
             CartItem cartItem = new CartItem();
             cartItem.setProductId(productId);
-            cartItem.setQuantity(1);
+            cartItem.setQuantity(newQuantity);
             cartItem.setTotalPrice(product.getPrice());
             cartItem.setCart(cart);
             cartItems.add(cartItem);
@@ -96,28 +126,26 @@ public class CartService {
         cart.setTotalOrderPrice(cartItems.stream().mapToDouble(CartItem::getTotalPrice).sum());
 
         cart.setTotalOrderPrice(Math.round(cart.getTotalOrderPrice() * 100.0) / 100.0);
-        return cartRepository.save(cart);
+
+        cart = cartRepository.save(cart);
+        return convertToDto(cart);
     }
 
-
-
-    @CachePut(key = "#userId")
     @Transactional
-    public Cart deleteCartItems(int userId, int pid) {
-        Cart cart = getCartByUserId(userId);
+    @CachePut(key = "#userId")
+    public CartDTO deleteCartItems(int userId, int pid) {
+        Cart cart = cartRepository.findByUserId(userId);
         if (cart == null || cart.getCartItems() == null || cart.getCartItems().isEmpty()) {
-            return cart;
+            return convertToDto(cart);
         }
 
         List<CartItem> cartItems = cart.getCartItems();
         Iterator<CartItem> iterator = cartItems.iterator();
-        boolean itemFound = false;
         while (iterator.hasNext()) {
             CartItem item = iterator.next();
             if (item.getProductId() == pid) {
                 iterator.remove();
                 cartItemRepository.delete(item);
-                itemFound = true;
                 break;
             }
         }
@@ -129,9 +157,9 @@ public class CartService {
         double totalOrderPrice = cartItems.stream().mapToDouble(CartItem::getTotalPrice).sum();
         cart.setTotalOrderPrice(Math.round(totalOrderPrice * 100.0) / 100.0);
         cartRepository.save(cart);
-        return cart;
-    }
 
+        return convertToDto(cart);
+    }
 
     @CacheEvict(key = "#userId")
     public String deleteCart(int userId, Long pid) {
@@ -139,9 +167,10 @@ public class CartService {
         return "SuccessFulli Delete";
     }
 
-   @CachePut(value = "cart", key = "#userId")
-    public Cart reduceQuantityt(int userId, int productId) {
-        ProductDTO product = productService.getProductById(productId);
+    @Transactional
+    @CachePut(key = "#userId")
+    public CartDTO reduceQuantityt(int userId, int productId) {
+        Product product = productRepo.findById(productId).orElseThrow(() -> new RuntimeException("Product not found"));
 
         Cart cart = cartRepository.findByUserId(userId);
 
@@ -164,20 +193,52 @@ public class CartService {
 
         if (existingCartItem != null) {
             existingCartItem.setQuantity(existingCartItem.getQuantity() - 1);
-            if( existingCartItem.getQuantity() ==0){
-               return deleteCartItems(userId,productId);
+            if (existingCartItem.getQuantity() <= 0) {
+                existingCartItem.setQuantity(1); // Keep quantity at 1 instead of removing
+                existingCartItem.setTotalPrice(product.getPrice());
+            } else {
+                existingCartItem.setTotalPrice(existingCartItem.getQuantity() * product.getPrice());
             }
-            existingCartItem.setTotalPrice(existingCartItem.getQuantity() * product.getPrice());
-        }else{
-            return cartRepository.save(cart);
+        } else {
+            return convertToDto(cartRepository.save(cart));
         }
 
         cart.setCartItems(cartItems);
         cart.setTotalOrderPrice(cartItems.stream().mapToDouble(CartItem::getTotalPrice).sum());
 
         cart.setTotalOrderPrice(Math.round(cart.getTotalOrderPrice() * 100.0) / 100.0);
-        return cartRepository.save(cart);
+        cartRepository.save(cart);
 
+        return convertToDto(cart);
     }
 
+    // ✅ Updated helper method to populate new fields
+    private CartDTO convertToDto(Cart cart) {
+        if (cart == null) {
+            return null;
+        }
+
+        List<CartItemDTO> itemDTOs = cart.getCartItems().stream().map(item -> {
+            Product product = productRepo.findById(item.getProductId()).orElse(null);
+            String productName = (product != null) ? product.getName() : "Unknown Product";
+            double price = (product != null) ? product.getPrice() : item.getTotalPrice() / item.getQuantity();
+            String brand = (product != null) ? product.getBrand() : "N/A";
+            String description = (product != null) ? product.getDescription() : "N/A";
+            String image = (product != null && product.getImageDate() != null) ? Base64.getEncoder().encodeToString(product.getImageDate()) : null;
+
+            return new CartItemDTO(
+                    item.getCartItemId(),
+                    item.getProductId(),
+                    productName,
+                    price,
+                    item.getQuantity(),
+                    item.getTotalPrice(),
+                    brand,
+                    description,
+                    image
+            );
+        }).toList();
+
+        return new CartDTO(cart.getCartId(), cart.getUserId(), cart.getTotalOrderPrice(), itemDTOs);
+    }
 }

@@ -45,6 +45,7 @@ public class ProductController {
                 ResponseEntity.status(HttpStatus.NOT_FOUND).build();
     }
 
+
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/add")
     public ResponseEntity<?> addProduct(@RequestPart("product") String productJson,
@@ -86,11 +87,11 @@ public class ProductController {
         return ResponseEntity.ok(service.searchProduct(keyword));
     }
 
-    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
-    @GetMapping("/searchName")
-    public ResponseEntity<List<ProductDTO>> getProductName(@RequestParam String name) {
-        return ResponseEntity.ok(service.getProductName(name));
-    }
+//    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
+//    @GetMapping("/searchName")
+//    public ResponseEntity<List<ProductDTO>> getProductName(@RequestParam String name) {
+//        return ResponseEntity.ok(service.getProductName(name));
+//    }
 
     @GetMapping("/image/{id}")
     public ResponseEntity<byte[]> getImage(@PathVariable int id) {
@@ -101,5 +102,15 @@ public class ProductController {
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_TYPE, product.getImageType())
                 .body(product.getImageDate());
+    }
+
+    @GetMapping("/featured")
+    public List<Product> getFeaturedProducts() {
+        return service.getFeaturedProducts();
+    }
+
+    @GetMapping("/categories")
+    public List<String> getAllCategories() {
+        return service.getAllCategories();
     }
 }

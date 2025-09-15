@@ -20,4 +20,11 @@ public interface ProductRepo  extends JpaRepository<Product,Integer> {
 
     public List<Product> searchProducts(String keyword);
 
+    List<Product> findTop5ByOrderByReleaseDateDesc();
+
+
+    @Query("SELECT DISTINCT p.category FROM Product p WHERE p.category IS NOT NULL")
+    List<String> findDistinctByCategory();
+
+
 }

@@ -2,8 +2,11 @@ package com.example.Ecom_Project.controller;
 
 import com.example.Ecom_Project.dto.LoginDTO;
 import com.example.Ecom_Project.dto.RegisterDTO;
+import com.example.Ecom_Project.model.Product;
 import com.example.Ecom_Project.model.Users;
+import com.example.Ecom_Project.repository.ProductRepo;
 import com.example.Ecom_Project.service.JWTService;
+import com.example.Ecom_Project.service.ProductService;
 import com.example.Ecom_Project.service.UserService;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,20 +24,24 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
+@RequestMapping("/api")
 public class UserController {
 
     @Autowired
     private UserService userService;
 
     @Autowired
+    private ProductService productService;
+
+    @Autowired
     private JWTService jwtService;
 
-    @GetMapping("/")
-    public String home() {
-        return "Welcome to Home!";
+    @GetMapping("/home")
+    public List<Product> home() {
+        return productService.getFeaturedProducts();
     }
 
-    @GetMapping("/home")
+    @GetMapping("/")
     public String homePage(HttpServletRequest request) {
         String jwtToken = (String) request.getSession().getAttribute("jwtToken");
         return jwtToken != null ? jwtToken : "Token not found";

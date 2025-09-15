@@ -81,4 +81,13 @@ public class ProductService {
     public void throwTestException() {
         throw new RuntimeException("This is a test exception for AOP");
     }
+
+    public List<Product> getFeaturedProducts() {
+
+        return repo.findTop5ByOrderByReleaseDateDesc();
+    }
+
+    public List<String> getAllCategories() {
+        return repo.findDistinctByCategory();
+    }
 }

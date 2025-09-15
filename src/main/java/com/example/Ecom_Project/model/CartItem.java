@@ -3,8 +3,10 @@ package com.example.Ecom_Project.model;
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
+import lombok.Data;
 
 @Entity
+@Data
 public class CartItem {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -17,6 +19,7 @@ public class CartItem {
     @JoinColumn(name = "cart_id")
     @JsonIgnore
     private Cart cart;
+
 
     // Getter and Setter Methods
     public int getCartItemId() {
