@@ -12,81 +12,27 @@ public class OrderItem {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int orderItemId;
-    private int productId;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "product_id", nullable = false)
+    @JsonBackReference("product-items") // ✅ Unique name for this relationship
+    private Product product;
+
     private int quantity;
     private double totalPrice;
 
-    @ManyToOne
-    @JoinColumn(name = "order_id")
-    @JsonBackReference
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "order_id", nullable = false)
+    @JsonBackReference("order-items") // ✅ Match the name from the Order model
     private Order order;
 
-    public void setOrderItemId(int orderItemId) {
-        this.orderItemId = orderItemId;
-    }
+    // Lombok's @Getter and @Setter handle the getters and setters
+    public OrderItem() {}
 
-    public void setProductId(int productId) {
-        this.productId = productId;
-    }
-
-    public void setQuantity(int quantity) {
-        this.quantity = quantity;
-    }
-
-    public void setTotalPrice(double totalPrice) {
-        this.totalPrice = totalPrice;
-    }
-
-    public void setOrder(Order order) {
-        this.order = order;
-    }
-
-    public OrderItem() {
-    }
-
-    public int getOrderItemId() {
-        return orderItemId;
-    }
-
-    public int getProductId() {
-        return productId;
-    }
-
-    public int getQuantity() {
-        return quantity;
-    }
-
-    public double getTotalPrice() {
-        return totalPrice;
-    }
-
-    public Order getOrder() {
-        return order;
-    }
-
-    public OrderItem(int orderItemId, int productId, int quantity, double totalPrice, Order order) {
-        this.orderItemId = orderItemId;
-        this.productId = productId;
+    public OrderItem(Product product, int quantity, double totalPrice, Order order) {
+        this.product = product;
         this.quantity = quantity;
         this.totalPrice = totalPrice;
         this.order = order;
-    }
-
-    public OrderItem(int productId, int quantity, double totalPrice, Order order) {
-        this.productId = productId;
-        this.quantity = quantity;
-        this.totalPrice = totalPrice;
-        this.order = order;
-    }
-
-    @Override
-    public String toString() {
-        return "OrderItem{" +
-                "orderItemId=" + orderItemId +
-                ", productId=" + productId +
-                ", quantity=" + quantity +
-                ", totalPrice=" + totalPrice +
-                ", order=" + order +
-                '}';
     }
 }

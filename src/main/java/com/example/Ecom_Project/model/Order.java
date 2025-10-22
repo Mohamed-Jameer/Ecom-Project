@@ -1,5 +1,6 @@
 package com.example.Ecom_Project.model;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -7,6 +8,7 @@ import lombok.Setter;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import com.fasterxml.jackson.annotation.JsonManagedReference; // ✅ New Import
 
 @Setter
 @Getter
@@ -17,92 +19,34 @@ public class Order {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int orderId;
 
-    private int userId;
+    // ✅ Replaced primitive userId with a relationship to the Users entity
+    @ManyToOne
+    @JoinColumn(name = "user_id", nullable = false)
+    @JsonBackReference("user-orders") // ✅ Unique name for this relationship
+    private Users user;
+
     private double totalAmount;
     private LocalDateTime orderDate;
     private String status; // e.g., "PLACED", "SHIPPED", "DELIVERED"
 
-    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    @JsonManagedReference
-    private List<OrderItem> orderItems = new ArrayList<>();
+    // ✅ Added the shipping address field using an @Embedded class
+    @Embedded
+    private ShippingAddress shippingAddress;
 
-    public Order(int orderId, int userId, double totalAmount, LocalDateTime orderDate, String status, List<OrderItem> orderItems) {
-        this.orderId = orderId;
-        this.userId = userId;
+    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonManagedReference("order-items") // ✅ Unique name for this relationship
+    private List<OrderItem> orderItems;
+    // Lombok's @Getter and @Setter handle all the methods below automatically.
+    // Manual methods are redundant if using Lombok.
+    public Order() {}
+
+    // Add a constructor for convenience without an orderId
+    public Order(Users user, double totalAmount, LocalDateTime orderDate, String status, ShippingAddress shippingAddress) {
+        this.user = user;
         this.totalAmount = totalAmount;
         this.orderDate = orderDate;
         this.status = status;
-        this.orderItems = orderItems;
-    }
-
-    public Order(int userId, double totalAmount, LocalDateTime orderDate, String status, List<OrderItem> orderItems) {
-        this.userId = userId;
-        this.totalAmount = totalAmount;
-        this.orderDate = orderDate;
-        this.status = status;
-        this.orderItems = orderItems;
-    }
-
-    public Order() {
-    }
-
-    public double getTotalAmount() {
-        return totalAmount;
-    }
-
-    public void setTotalAmount(double totalAmount) {
-        this.totalAmount = totalAmount;
-    }
-
-    public int getOrderId() {
-        return orderId;
-    }
-
-    public void setOrderId(int orderId) {
-        this.orderId = orderId;
-    }
-
-    public int getUserId() {
-        return userId;
-    }
-
-    public void setUserId(int userId) {
-        this.userId = userId;
-    }
-
-    public LocalDateTime getOrderDate() {
-        return orderDate;
-    }
-
-    public void setOrderDate(LocalDateTime orderDate) {
-        this.orderDate = orderDate;
-    }
-
-    public String getStatus() {
-        return status;
-    }
-
-    public void setStatus(String status) {
-        this.status = status;
-    }
-
-    public List<OrderItem> getOrderItems() {
-        return orderItems;
-    }
-
-    public void setOrderItems(List<OrderItem> orderItems) {
-        this.orderItems = orderItems;
-    }
-
-    @Override
-    public String toString() {
-        return "Order{" +
-                "orderId=" + orderId +
-                ", userId=" + userId +
-                ", totalAmount=" + totalAmount +
-                ", orderDate=" + orderDate +
-                ", status='" + status + '\'' +
-                ", orderItems=" + orderItems +
-                '}';
+        this.shippingAddress = shippingAddress;
     }
 }
+

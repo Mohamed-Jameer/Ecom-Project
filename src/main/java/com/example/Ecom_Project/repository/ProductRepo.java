@@ -27,4 +27,5 @@ public interface ProductRepo  extends JpaRepository<Product,Integer> {
     List<String> findDistinctByCategory();
 
 
+    List<Product> findByCategory(String category);
 }

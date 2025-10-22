@@ -1,6 +1,7 @@
 package com.example.Ecom_Project.model;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -12,12 +13,13 @@ import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.List;
 
 @Getter
 @Data
 @Component
 @Entity
-public class Product implements Serializable {
+public class Product  {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -39,6 +41,13 @@ public class Product implements Serializable {
     @Lob
     private byte[] imageDate;
 
+    public void setOrderItems(List<OrderItem> orderItems) {
+        this.orderItems = orderItems;
+    }
+
+    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonManagedReference("product-items") // ✅ Match the name from the OrderItem model
+    private List<OrderItem> orderItems;
     public void setImageName(String imageName) {
         this.imageName = imageName;
     }
@@ -139,51 +148,4 @@ public class Product implements Serializable {
                 '}';
     }
 
-    public int getId() {
-        return id;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public String getBrand() {
-        return brand;
-    }
-
-    public double getPrice() {
-        return price;
-    }
-
-    public String getCategory() {
-        return category;
-    }
-
-    public Date getReleaseDate() {
-        return releaseDate;
-    }
-
-    public boolean isAvailable() {
-        return available;
-    }
-
-    public int getQuantity() {
-        return quantity;
-    }
-
-    public String getImageName() {
-        return imageName;
-    }
-
-    public String getImageType() {
-        return imageType;
-    }
-
-    public byte[] getImageDate() {
-        return imageDate;
-    }
 }

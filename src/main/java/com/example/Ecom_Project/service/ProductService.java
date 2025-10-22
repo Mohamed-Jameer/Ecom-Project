@@ -90,4 +90,8 @@ public class ProductService {
     public List<String> getAllCategories() {
         return repo.findDistinctByCategory();
     }
+
+    public List<Product> findRelatedProducts(String category) {
+        return repo.findByCategory(category);
+    }
 }

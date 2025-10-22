@@ -30,7 +30,7 @@ public class ProductController {
         service.throwTestException();
     }
 
-    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
+
     @GetMapping
     public ResponseEntity<List<ProductDTO>> getAllProducts() {
         return ResponseEntity.ok(service.getAllProducts());
@@ -81,7 +81,6 @@ public class ProductController {
         }
     }
 
-    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
     @GetMapping("/search")
     public ResponseEntity<List<ProductDTO>> searchProduct(@RequestParam String keyword) {
         return ResponseEntity.ok(service.searchProduct(keyword));
@@ -113,4 +112,11 @@ public class ProductController {
     public List<String> getAllCategories() {
         return service.getAllCategories();
     }
+
+
+@GetMapping("/category")
+public List<Product> findRelatedProducts(String category) {
+    return service.findRelatedProducts(category);
+}
+
 }

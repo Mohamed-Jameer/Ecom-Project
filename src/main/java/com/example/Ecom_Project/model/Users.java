@@ -6,6 +6,7 @@ import jakarta.persistence.*;
 import org.springframework.stereotype.Component;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 @Entity
@@ -31,6 +32,21 @@ public class Users {
     )
     @JsonIgnore
     private Set<Roles> roles = new HashSet<>();
+
+
+    public Users(int userId, String userName, String userEmail, long userPhoneNo, String userPassword, String userGender, String userAddress, Set<Roles> roles, List<Order> orders) {
+        this.userId = userId;
+        this.userName = userName;
+        this.userEmail = userEmail;
+        this.userPhoneNo = userPhoneNo;
+        this.userPassword = userPassword;
+        this.userGender = userGender;
+        this.userAddress = userAddress;
+        this.roles = roles;
+
+    }
+
+
 
 
     public long getUserPhoneNo() {

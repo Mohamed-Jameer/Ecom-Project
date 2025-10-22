@@ -110,3 +110,17 @@ export const deleteCartItem = (productId) => {
     return api.delete(`/cart/item/${productId}`);
 };
 
+
+// ✅ Corrected: Pass the shipping data and use the 'api' instance
+export const placeOrder = async (orderData) => {
+    return await api.post('/orders/place', orderData);
+};
+
+// ✅ Corrected: Use the 'api' instance and the correct endpoint path
+export const fetchOrders = async () => {
+    // We are awaiting the API call and getting the full response object
+    const response = await api.get('/orders/my');
+
+    // ✅ We return only the 'data' property from the response object
+    return response.data;
+};
