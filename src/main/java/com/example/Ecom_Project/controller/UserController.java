@@ -63,9 +63,11 @@ public class UserController {
 
     // ✅ Public: Login
     @PostMapping("/login")
-    public String login(@RequestBody LoginDTO loginDTO) {
-        System.out.println(loginDTO);
-        return userService.verify(loginDTO);
+    public ResponseEntity<Map<String, String>> login(@RequestBody LoginDTO loginDTO) {
+        String token = userService.verify(loginDTO);
+        Map<String, String> response = new HashMap<>();
+        response.put("token", token); // wrap token in JSON
+        return ResponseEntity.ok(response);
     }
 
     // 🔐 ADMIN Only: Get all users

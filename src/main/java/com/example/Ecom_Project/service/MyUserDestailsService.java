@@ -37,6 +37,11 @@ public class MyUserDestailsService implements UserDetailsService {
             Users user = repo.findByUserEmail(username)
                     .orElseThrow(() -> new UsernameNotFoundException("User not found"));
 
+            if (user.getUserPassword() == null || user.getUserPassword().isEmpty()) {
+                // Assign a dummy password for OAuth users
+                user.setUserPassword("OAUTH_USER");
+            }
+
             List<GrantedAuthority> authorities = user.getRoles().stream()
                     .map(role -> new SimpleGrantedAuthority("ROLE_" + role.getName()))
                     .collect(Collectors.toList());

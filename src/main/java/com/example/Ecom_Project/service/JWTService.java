@@ -1,8 +1,8 @@
 package com.example.Ecom_Project.service;
 
-
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -16,65 +16,76 @@ import java.util.Base64;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Function;
 
 @Service
 public class JWTService {
 
-    private String SECRET_KEY = "";
+    private final String SECRET_KEY;
 
     public JWTService() throws NoSuchAlgorithmException {
+        // Generate a secure random key
         KeyGenerator keyGen = KeyGenerator.getInstance("HmacSHA256");
         SecretKey sk = keyGen.generateKey();
         SECRET_KEY = Base64.getEncoder().encodeToString(sk.getEncoded());
     }
 
+    // ✅ Generate JWT token
     public String generateToken(String userName) {
+        System.out.println("Generating token for: " + userName);
 
-        System.out.println("generateToken"+userName);
         Map<String, Object> claims = new HashMap<>();
         return Jwts.builder()
-                .setClaims(claims) // Set claims here
+                .setClaims(claims)
                 .setSubject(userName)
                 .setIssuedAt(new Date(System.currentTimeMillis()))
-                .setExpiration(new Date(System.currentTimeMillis() + 60 * 60 * 30 * 1000)) // 30 minutes expiry
-                .signWith(getKey())
+                .setExpiration(new Date(System.currentTimeMillis() + 30 * 60 * 1000)) // 30 mins
+                .signWith(getKey(), SignatureAlgorithm.HS256)
                 .compact();
-}
-
-    private Key getKey() {
-        byte[] keyBytes = Decoders.BASE64.decode(SECRET_KEY);
-        return Keys.hmacShaKeyFor(keyBytes);
     }
 
+    // ✅ Extract username from token
     public String extractUserName(String token) {
-        return extractClaim(token, Claims::getSubject);  // Extract the subject (username) from JWT
+        return extractClaim(token, Claims::getSubject);
     }
 
-    // Validate if the token is correct
+    // ✅ Validate token
     public boolean validToken(String token, UserDetails userDetails) {
         String username = extractUserName(token);
         return (username.equals(userDetails.getUsername()) && !isTokenExpired(token));
     }
 
-    // Check if the token is expired
+    // 🔒 Check if token is expired
     private boolean isTokenExpired(String token) {
         return extractClaim(token, Claims::getExpiration).before(new Date());
     }
 
-    // Extract specific claim from the token
-    private <T> T extractClaim(String token, java.util.function.Function<Claims, T> claimsResolver) {
+    // 🔹 Extract any claim using a resolver function
+    private <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {
         final Claims claims = extractAllClaims(token);
         return claimsResolver.apply(claims);
     }
 
-    // Extract all claims from the token
+    // ✅ Extract all claims safely
     private Claims extractAllClaims(String token) {
-        Key key = getKey();  // Decode the secret key to a Key object
+        if (token == null || token.isEmpty()) {
+            throw new IllegalArgumentException("JWT token cannot be null or empty");
+        }
+
+        token = token.trim(); // Remove whitespace
+
+        System.out.println("Parsing token: [" + token + "]");
+
         return Jwts.parser()
                 .setSigningKey(getKey())
                 .build()
-                .parseSignedClaims(token)
-                .getPayload();
+                .parseClaimsJws(token) // Correct parsing
+                .getBody();
     }
 
+    // 🔑 Convert base64 SECRET_KEY to Key
+    private Key getKey() {
+        byte[] keyBytes = Decoders.BASE64.decode(SECRET_KEY);
+        return Keys.hmacShaKeyFor(keyBytes);
+    }
 }
