@@ -65,8 +65,12 @@ public class UserController {
     @PostMapping("/login")
     public ResponseEntity<Map<String, String>> login(@RequestBody LoginDTO loginDTO) {
         String token = userService.verify(loginDTO);
+        String role = userService.getUserRole(loginDTO.getUserEmail());
+        System.out.println(role);
+        System.out.println(token);
         Map<String, String> response = new HashMap<>();
-        response.put("token", token); // wrap token in JSON
+        response.put("token", token);
+        response.put("role", role);// wrap token in JSON
         return ResponseEntity.ok(response);
     }
 

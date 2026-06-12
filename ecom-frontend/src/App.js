@@ -1,14 +1,14 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Link, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import 'bootstrap/dist/css/bootstrap.min.css';
 
-// Import the reusable components
+// Components
 import Header from './components/Header';
 import Footer from './components/Footer';
-
-// Import page components
 import Login from './components/Login';
 import Registration from './components/Registration';
 import Dashboard from './components/Dashboard';
+import AdminDashboard from './components/AdminDashboard';
 import OAuth2RedirectHandler from './components/OAuth2RedirectHandler';
 import Home from './components/Home';
 import ProductList from './components/ProductList';
@@ -16,74 +16,72 @@ import ProductDetail from './components/ProductDetail';
 import Cart from './components/Cart';
 import CheckoutPage from './components/CheckoutPage';
 import OrderConfirmationPage from './components/OrderConfirmationPage';
-import MyOrders from './components/MyOrders'; // ✅ The new import
-
-// This component protects routes by checking for a token
-const ProtectedRoute = ({ children }) => {
-    const token = localStorage.getItem('jwtToken');
-    if (!token) {
-        // Use <Navigate> for proper routing
-        return <Navigate to="/login" />;
-    }
-    return children;
-};
+import MyOrders from './components/MyOrders';
+import ProtectedRoute from './components/ProtectedRoute';
+import AccessDenied from './components/AccessDenied';
 
 const App = () => {
-    const handleLogout = () => {
-        localStorage.removeItem('jwtToken');
-        window.location.href = '/';
-    };
+  return (
+    <Router>
+      <div style={appContainerStyle}>
+        <Header />
+        <main style={mainContentStyle}>
+          <Routes>
+            {/* Public routes */}
+            <Route path="/" element={<Home />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Registration />} />
+            <Route path="/oauth2/redirect" element={<OAuth2RedirectHandler />} />
+            <Route path="/products" element={<ProductList />} />
+            <Route path="/products/:id" element={<ProductDetail />} />
+            <Route path="/cart" element={<Cart />} />
+            <Route path="/checkout" element={<CheckoutPage />} />
+            <Route path="/order-confirmation" element={<OrderConfirmationPage />} />
+            <Route path="/my-orders" element={<MyOrders />} />
 
-    return (
-        <Router>
-            {/* Main flex container to push footer to the bottom */}
-            <div style={appContainerStyle}>
-                {/* Header no longer needs cart props */}
-                <Header />
-                <main style={mainContentStyle}>
-                    <Routes>
-                        <Route path="/" element={<Home />} />
-                        <Route path="/login" element={<Login />} />
-                        <Route path="/register" element={<Registration />} />
-                        <Route path="/oauth2/redirect" element={<OAuth2RedirectHandler />} />
+            {/* User Dashboard */}
+            <Route
+              path="/dashboard"
+              element={
+                <ProtectedRoute allowedRoles={['USER']}>
+                  <Dashboard />
+                </ProtectedRoute>
+              }
+            />
 
-                        {/* ProductList no longer needs cart handlers */}
-                        <Route path="/products" element={<ProductList />} />
+            {/* Admin Dashboard */}
+            <Route
+              path="/admindashboard"
+              element={
+                <ProtectedRoute allowedRoles={['ADMIN']}>
+                  <AdminDashboard />
+                </ProtectedRoute>
+              }
+            />
 
-                        <Route path="/products/:id" element={<ProductDetail />} />
-                        <Route path="/my-orders" element={<MyOrders />} /> {/* ✅ The new route */}
+            {/* Access Denied */}
+            <Route path="/access-denied" element={<AccessDenied />} />
 
-                        {/* Cart no longer needs cart state or handlers */}
-                        <Route path="/cart" element={<Cart />} />
-                         <Route path="/order-confirmation" element={<OrderConfirmationPage />} />
-
-                        <Route path="/checkout" element={<CheckoutPage />} />
-
-                        <Route
-                            path="/dashboard"
-                            element={
-                                <ProtectedRoute>
-                                    <Dashboard />
-                                </ProtectedRoute>
-                            }
-                        />
-                    </Routes>
-                </main>
-                <Footer />
-            </div>
-        </Router>
-    );
+            {/* Fallback */}
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </main>
+        <Footer />
+      </div>
+    </Router>
+  );
 };
 
+// ----- Styles -----
 const appContainerStyle = {
-    display: 'flex',
-    flexDirection: 'column',
-    minHeight: '100vh',
+  display: 'flex',
+  flexDirection: 'column',
+  minHeight: '100vh',
 };
 
 const mainContentStyle = {
-    flex: '1',
-    padding: '20px',
+  flex: '1',
+  padding: '20px',
 };
 
 export default App;

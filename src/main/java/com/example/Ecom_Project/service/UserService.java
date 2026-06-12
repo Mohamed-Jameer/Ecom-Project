@@ -150,5 +150,19 @@ public class UserService {
     public Users findByUserEmail(String userEmail) {
         return userRepo.findByUserEmailWithRoles(userEmail).orElse(null);
     }
+    public String getUserRole(String email) {
+        Users user = userRepo.findByUserEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found with email: " + email));
 
+        // Check if user has ADMIN role
+        boolean isAdmin = user.getRoles().stream()
+                .anyMatch(role -> role.getName().equalsIgnoreCase("ADMIN"));
+
+        if (isAdmin) {
+            return "ADMIN";
+        }
+
+        // Default to USER if not admin
+        return "USER";
+    }
 }

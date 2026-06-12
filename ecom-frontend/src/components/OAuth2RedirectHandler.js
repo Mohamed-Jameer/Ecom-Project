@@ -1,29 +1,32 @@
 import React, { useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 
 const OAuth2RedirectHandler = () => {
-    const navigate = useNavigate();
-    const location = useLocation();
+  const navigate = useNavigate();
 
-    useEffect(() => {
-        const queryParams = new URLSearchParams(location.search);
-        const token = queryParams.get('token');
+  useEffect(() => {
+    // Parse query params from Google redirect
+    const params = new URLSearchParams(window.location.search);
+    const token = params.get('token');
+    const role = params.get('role');
 
-        if (token) {
-            localStorage.setItem('jwtToken', token);
-            // Correct: Redirect to a frontend route
-            navigate('/dashboard', { replace: true });
-        } else {
-            navigate('/login', { replace: true });
-        }
-    }, [navigate, location.search]);
+    if (token && role) {
+      // Store token and role (uppercase to match allowedRoles)
+      localStorage.setItem('jwtToken', token);
+      localStorage.setItem('role', role.toUpperCase());
 
-    return (
-        <div style={{ textAlign: 'center', marginTop: '50px' }}>
-            <h2>Processing OAuth2 Login...</h2>
-            <p>Please wait, you are being redirected.</p>
-        </div>
-    );
+      // Trigger login event for Header
+      window.dispatchEvent(new Event('login'));
+
+      // Redirect based on role
+      if (role.toUpperCase() === 'ADMIN') navigate('/admindashboard', { replace: true });
+      else navigate('/dashboard', { replace: true });
+    } else {
+      navigate('/login', { replace: true });
+    }
+  }, [navigate]);
+
+  return <div style={{ textAlign: 'center', marginTop: '50px' }}>Redirecting...</div>;
 };
 
 export default OAuth2RedirectHandler;

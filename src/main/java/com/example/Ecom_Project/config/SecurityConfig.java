@@ -60,8 +60,8 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers("api/register" ,"api/login","/register" ,"/login", "/oauth2/**","api/home","/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html","api/products/featured","api/products/categories","api/products","api/products/search").permitAll()
-                        .requestMatchers("/admin/**").hasRole("ADMIN")
-                        .requestMatchers("/user/**").hasAnyRole("USER", "ADMIN")
+                        .requestMatchers("/admin/**","/admindashboard/**" ).hasRole("ADMIN")
+                        .requestMatchers("/user/**","/dashboard/**").hasAnyRole("USER", "ADMIN")
                         .anyRequest().authenticated()
                 )
                 .exceptionHandling(exception -> exception

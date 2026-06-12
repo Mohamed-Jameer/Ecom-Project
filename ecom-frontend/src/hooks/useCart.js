@@ -1,80 +1,23 @@
-import { useState, useEffect } from 'react';
-import { fetchUserCart, addToCart, deleteCartItem, reduceCartItemQuantity } from '../api';
+// src/hooks/useCart.js
+import { useState, useEffect } from "react";
 
 const useCart = () => {
-    const [cartItems, setCartItems] = useState([]);
-    const [cartCount, setCartCount] = useState(0);
+  const [cartCount, setCartCount] = useState(0);
 
-    const refreshCart = async () => {
-        try {
-            const token = localStorage.getItem('jwtToken');
-            if (!token) {
-                setCartItems([]);
-                setCartCount(0);
-                return;
-            }
+  useEffect(() => {
+    const storedCart = JSON.parse(localStorage.getItem("cart") || "[]");
+    setCartCount(storedCart.length);
 
-            const data = await fetchUserCart();
-            setCartItems(data.cartItems || []);
-            setCartCount(data.cartItems ? data.cartItems.length : 0);
-        } catch (error) {
-            console.error('Failed to refresh cart:', error);
-            setCartItems([]);
-            setCartCount(0);
-        }
+    const handleCartUpdate = () => {
+      const updatedCart = JSON.parse(localStorage.getItem("cart") || "[]");
+      setCartCount(updatedCart.length);
     };
 
-    const handleAddToCart = async (productId) => {
-        try {
-            await addToCart(productId);
-            await refreshCart();
-        } catch (error) {
-            console.error('Error adding to cart:', error);
-        }
-    };
+    window.addEventListener("cartUpdate", handleCartUpdate);
+    return () => window.removeEventListener("cartUpdate", handleCartUpdate);
+  }, []);
 
-    const handleDeleteCartItem = async (productId) => {
-        try {
-            await deleteCartItem(productId);
-            await refreshCart();
-        } catch (error) {
-            console.error('Error deleting cart item:', error);
-        }
-    };
-
-    const handleReduceCartItemQuantity = async (productId) => {
-        try {
-            await reduceCartItemQuantity(productId);
-            await refreshCart();
-        } catch (error) {
-            console.error('Error reducing cart item quantity:', error);
-        }
-    };
-
-    useEffect(() => {
-        refreshCart();
-
-        const handleLoginLogout = () => {
-            refreshCart();
-        };
-
-        window.addEventListener('login', handleLoginLogout);
-        window.addEventListener('logout', handleLoginLogout);
-
-        return () => {
-            window.removeEventListener('login', handleLoginLogout);
-            window.removeEventListener('logout', handleLoginLogout);
-        };
-    }, []);
-
-    return {
-        cartItems,
-        cartCount,
-        handleAddToCart,
-        handleDeleteCartItem,
-        handleReduceCartItemQuantity,
-        refreshCart,
-    };
+  return { cartCount };
 };
 
 export default useCart;

@@ -112,7 +112,14 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
         // Option 1: Store in session
         request.getSession().setAttribute("jwtToken", jwtToken);
 
-        response.sendRedirect("http://localhost:3000/oauth2/redirect?token=" + jwtToken);
+        String role = user.getRoles().stream()
+                .map(Roles::getName)
+                .anyMatch(r -> r.equalsIgnoreCase("ADMIN")) ? "ADMIN" : "USER";
+
+// Redirect with token & role
+        response.sendRedirect(
+                "http://localhost:3000/oauth2/redirect?token=" + jwtToken + "&role=" + role
+        );
     }
 
     private String extractGender(Map<String, Object> data) {
